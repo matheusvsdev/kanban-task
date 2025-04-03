@@ -6,26 +6,29 @@
 }
 
 :root {
-  --background-color: #ebebeb;
-  --navbar-color: #f8f8f8;
+  --background-color: #dedede;
+  --navbar-color: #f5f5f7;
   --icons: #777;
-  --text-color: #222;
+  --text-color: #555;
   --text-card: #f5f5f7;
   --description: #777;
   --button-color: #222;
   --circle-picture: #04d134;
   --circle-group-users: #c49ceb;
-  --card-background: #f8f8f8;
+  --card-background: #f5f5f7;
   --card-color: #444444;
-  --task-background: #ebebeb;
+  --task-background: #dedede;
   --task-header: #ad4ae2;
   --task-in-progress: #5052e3;
   --task-delivered: #50a8e3;
   --task-revision: #50e3a6;
   --task-done: #e3c350;
   --tag-new: #50e361;
-  --tag-review: #e36b50;
-  --tag-done: #5095e3;
+  --tag-progress: #50a1e3;
+  --tag-delivered: #50a1e3;
+  --tag-review: #e3d750;
+  --tag-reviewing: #e35050;
+  --tag-done: #5a50e3;
   --dropdown-hover: #333333;
 }
 
@@ -114,7 +117,7 @@ i {
   --background-color: #2e2e2e;
   --navbar-color: #111;
   --icons: #777;
-  --text-color: #fff;
+  --text-color: #888;
   --text-card: #f5f5f7;
   --button-color: #fff;
   --card-background: #111;
@@ -196,6 +199,7 @@ i {
   padding: 10px;
   border-radius: 8px;
   margin: 10px;
+  transform: translateZ(0); /* Corrige renderização no arrasto */
 }
 
 .task h4 {
@@ -205,9 +209,13 @@ i {
 }
 
 .task .description {
+  width: 100%;
   font-size: 0.9rem;
   color: var(--description);
   margin-bottom: 10px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .tag-users {
@@ -228,24 +236,37 @@ i {
 /* Cores das tags */
 .tag.new {
   background-color: var(--tag-new);
-  color: var(--text-color);
+  color: var(--text-card);
 }
 
-.tag.in-progress {
-  background-color: var(--task-in-progress);
-  color: var(--text-color);
+.tag.progress {
+  background-color: var(--tag-progress);
+  color: var(--text-card);
+}
+
+.tag.delivered {
+  background-color: var(--tag-delivered);
+  color: var(--text-card);
 }
 
 .tag.review {
   background-color: var(--tag-review);
-  color: var(--text-color);
+  color: var(--text-card);
 }
 
-.tag.completed {
+.tag.reviewing {
+  background-color: var(--tag-reviewing);
+  color: var(--text-card);
+}
+
+.tag.done {
   background-color: var(--tag-done);
-  color: var(--text-color);
+  color: var(--text-card);
 }
 
+.hidden {
+  display: none;
+}
 
 .assigned-users {
   display: flex;
@@ -287,4 +308,64 @@ i {
 .details {
   font-size: 1.2rem;
   color: var(--description);
+  cursor: pointer;
+}
+
+.task.dragging {
+  border-radius: 8px; /* Mantém as bordas arredondadas ao arrastar */
+  transform: translateZ(0); /* Força renderização correta */
+}
+
+.task.expanded {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 60%;
+  max-width: 600px;
+  background: var(--background-color);
+  padding: 20px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  z-index: 1000;
+}
+
+.task.expanded h4 {
+  font-size: 24px; /* Aumenta o tamanho do título para destaque */
+  font-weight: bold;
+}
+
+.task.expanded .description {
+  white-space: normal; /* Permite quebras de linha quando expandido */
+  text-overflow: unset; /* Remove o "..." no modo expandido */
+  word-wrap: break-word; /* Força a quebra de palavras longas */
+  overflow: visible; /* Faz o texto ocupar todo o espaço disponível */
+  margin-bottom: 30px;
+}
+
+.task.expanded .details {
+  display: none;
+}
+
+.task.expanded .tag {
+  font-size: 1rem;
+}
+
+.task.expanded .container-img-task {
+  width: 40px;
+  height: 40px;
+}
+
+.task .close-icon {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 24px;
+  cursor: pointer;
+  display: none; /* Ícone só aparece quando o card for expandido */
+}
+
+.task.expanded .close-icon {
+  display: block; /* Exibe o botão de fechar */
+  color: var(--text-color);
 }

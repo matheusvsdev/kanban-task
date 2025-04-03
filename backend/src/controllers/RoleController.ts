@@ -8,7 +8,8 @@ class RoleController {
       if (!newRole) res.status(409).json({ message: "Nome já cadastrado" });
       const formattedRoleResponse = {
         _id: newRole?._id,
-        description: newRole?.name,
+        name: newRole?.name,
+        description: newRole?.description,
         createdAt: newRole?.createdAt,
       };
       res.status(201).json(formattedRoleResponse);

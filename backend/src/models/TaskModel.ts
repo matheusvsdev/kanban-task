@@ -1,40 +1,58 @@
 import { Document, Types, Schema, model } from "mongoose";
 
-
-export interface ITask extends Document  {
-    title: string;
-    description: string;
-    delivery_date: Date;
-    status: "new" | "in-progress" | "review" | "done";
-    assigned_users: Types.ObjectId[];
-    createdAt: Date;
-    updatedAt: Date;
+export interface ITask extends Document {
+  title: string;
+  description: string;
+  delivery_date: Date;
+  status: "new" | "progress" | "delivered" | "review" | "done";
+  secondary_status?: "reviewing"; // Campo opcional para quando não for aprovada na revisão
+  assigned_users: Types.ObjectId[];
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 const TaskSchema = new Schema<ITask>(
-    {
-        title: {
-            type: String,
-            required: true
-        },
-        description: {
-            type: String,
-            required: true
-        },
-        delivery_date: {
-            type: Date,
-            required: true
-        },
-        status: {
-            type: String,
-            enum: ["new", "in-progress", "review", "done"],
-            default: "new"
-        },
-        assigned_users: [{type: Types.ObjectId, ref: "User"}]
+  {
+    title: {
+      type: String,
+      required: true,
     },
-    {
-        timestamps: true
-    }
+    description: {
+      type: String,
+      required: true,
+    },
+    delivery_date: {
+      type: Date,
+      required: true,
+    },
+    status: {
+      type: String,
+      enum: ["new", "progress", "review", "done"],
+      default: "new",
+    },
+    secondary_status: {
+      type: String,
+      enum: ["reviewing"], // Apenas "reviewing" pode ser usado
+      required: false, // Começa sem "reviewing"
+    },
+    assigned_users: {
+      type: [{ type: Types.ObjectId, ref: "User" }], // 🔥 Define como um ARRAY de ObjectId
+      validate: {
+        validator: function (users: Types.ObjectId[]) {
+          return (
+            Array.isArray(users) &&
+            users.length <= 3 &&
+            users.every((user) => Types.ObjectId.isValid(user))
+          );
+        },
+        message:
+          "A tarefa deve ter no máximo 3 usuários, e todos devem ser ObjectId válidos!",
+      },
+    },
+  },
+  {
+    timestamps: true,
+  }
 );
 
 const TaskModel = model<ITask>("Task", TaskSchema);

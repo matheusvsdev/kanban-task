@@ -16,5 +16,6 @@ router.get("/users/:id", UserController.getUserById);
 // Tasks
 router.post("/tasks/create", TaskController.createTask);
 router.get("/tasks", TaskController.getAllTasks);
+router.patch("/tasks/:id", TaskController.updateTaskStatus);
 
 export default router;

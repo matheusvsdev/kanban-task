@@ -32,6 +32,36 @@ class TaskController {
       res.status(500).json({ message: "Erro ao buscar tarefas", error });
     }
   }
+
+  static async updateTaskStatus(req: Request, res: Response) {
+    try {
+      const { id } = req.params;
+      const { status } = req.body;
+
+      // **Validação: Status deve ser válido**
+      const validStatus = ["new", "progress", "delivered", "review", "done"];
+      if (!validStatus.includes(status)) {
+        res.status(400).json({ message: "Status inválido." });
+      }
+
+      // Agora chamamos o Service para atualizar corretamente
+      const updatedTask = await TaskService.updateStatus(id, status);
+
+      if (!updatedTask) {
+        res.status(404).json({ message: "Tarefa não encontrada." });
+      }
+
+      res.status(200).json({
+        message: "Status atualizado com sucesso!",
+        task: updatedTask,
+      });
+    } catch (error) {
+      res.status(500).json({
+        message: "Erro ao atualizar status da tarefa",
+        error,
+      });
+    }
+  }
 }
 
 export default TaskController;

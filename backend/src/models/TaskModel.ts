@@ -7,6 +7,8 @@ export interface ITask extends Document  {
     delivery_date: Date;
     status: "new" | "in-progress" | "review" | "done";
     assigned_users: Types.ObjectId[];
+    createdAt: Date;
+    updatedAt: Date;
 }
 
 const TaskSchema = new Schema<ITask>(

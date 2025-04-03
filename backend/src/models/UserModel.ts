@@ -6,6 +6,7 @@ export interface IUser extends Document {
     email: string;
     password: string;
     role: Types.ObjectId;
+    createdAt: Date;
 }
 
 const UserSchema = new Schema<IUser>(

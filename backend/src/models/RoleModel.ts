@@ -3,6 +3,7 @@ import { Document, Schema, model } from "mongoose";
 export interface IRole extends Document {
     name: string;
     description: string;
+    createdAt: Date;
 }
 
 const RoleSchema = new Schema<IRole>(

@@ -16,36 +16,45 @@ class TaskService {
     return await TaskModel.create(taskData);
   }
 
-  static async findAll() {
-    return await TaskModel.find()
+  static async findAll(userId: string, userRole: string) {
+    const normalizedRole = userRole.toLowerCase();
+
+    let query = {};
+
+    // Se não for admin, manager ou tech, filtra apenas as tarefas do usuário
+    if (["admin", "manager", "tech"].includes(normalizedRole)) {
+      query = {};
+    } else {
+      query = { assigned_users: userId };
+    }
+
+    return await TaskModel.find(query)
       .populate({
         path: "assigned_users",
-        select: "-createdAt -updatedAt -__v",
+        select: "-createdAt -updatedAt",
       })
-      .select("-__v")
       .exec();
   }
 
   static async updateStatus(
     taskId: string,
-    newStatus: "new" | "progress" | "delivered" | "review" | "done"
+    newStatus: "new" | "progress" | "delivered" | "review" | "done",
+    userRole: string
   ) {
     const task = await TaskModel.findById(taskId);
     if (!task) return null;
 
-    let updatedFields: Partial<ITask> = { status: newStatus };
-
-    if (task.status === "review" && newStatus === "progress") {
-      updatedFields.secondary_status = "reviewing";
-    }
-
-    if (newStatus === "review" || newStatus === "done") {
-      return await TaskModel.findByIdAndUpdate(
-        taskId,
-        { $unset: { secondary_status: "" }, status: newStatus }, // Agora removemos corretamente
-        { new: true }
+    if (
+      ["new", "review", "done"].includes(newStatus) &&
+      !["admin", "manager"].includes(userRole)
+    ) {
+      throw new Error(
+        "Permissão negada: Apenas admins e managers podem definir este status."
       );
     }
+
+    let updatedFields: Partial<ITask> = { status: newStatus };
+
     return await TaskModel.findByIdAndUpdate(
       taskId,
       updatedFields,

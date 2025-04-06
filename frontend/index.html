@@ -15,16 +15,14 @@
   </head>
   <body>
     <header id="header">
-      <h2 id="logo">WorkRoom</h2>
+      <h2 id="logo">Work<span>Room</span></h2>
       <div id="nav">
         <div id="first-bar-items">
           <a href="#"><i class="fa-solid fa-video"></i></a>
           <a href="#"><i class="fa-solid fa-bell"></i></a>
         </div>
         <div id="second-bar-items">
-          <div id="container-image">
-            <img src="img/profile-img.jpg" alt="Foto de perfil do usuário" />
-          </div>
+          <h4></h4>
           <a href="#"><i class="fa-solid fa-right-from-bracket"></i></a>
           <div class="mode-toggle">
             <button id="light-mode-toggle">
@@ -58,6 +56,60 @@
         </div>
       </div>
     </div>
+    <!-- Modal de adicionar tarefa -->
+    <div id="taskModal" class="modal">
+      <div class="modal-content">
+        <h2>Adicionar Tarefa</h2>
+        <button id="closeModal">X</button>
+        <!-- Botão para fechar -->
+        <form id="taskForm">
+          <label for="taskTitle">Título:</label>
+          <input type="text" id="taskTitle" required />
+
+          <label for="taskDescription">Descrição:</label>
+          <textarea id="taskDescription" required></textarea>
+
+          <label for="taskDeadline">Prazo:</label>
+          <input type="date" id="taskDeadline" required />
+
+          <button type="button" id="loadUsers">Atribuir Profissionais</button>
+          <!-- 🔥 Botão para carregar usuários -->
+          <div id="userList">
+            <!-- Os usuários serão carregados ao clicar no botão -->
+          </div>
+
+          <button type="submit">Criar</button>
+        </form>
+      </div>
+    </div>
+    <!-- Modal de adicionar usuário -->
+    <div id="userModal" class="modal">
+      <div class="modal-content">
+        <h2>Cadastrar Usuário</h2>
+        <button id="closeModal">X</button>
+        <!-- Botão para fechar -->
+        <form id="userForm">
+
+          <label for="username">Nome:</label>
+          <input type="text" id="username" required />
+
+          <label for="email">Email:</label>
+          <input type="email" id="email" required />
+
+          <label for="password">Senha:</label>
+          <input type="password" id="password" required />
+
+          <label for="role">Função:</label>
+          <select id="role" required>
+            <option value="manager">Manager</option>
+            <option value="developer">Desenvolvedor</option>
+          </select>
+
+          <button type="submit">Criar</button>
+        </form>
+      </div>
+    </div>
+    <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <script src="js/script.js"></script>
   </body>
 </html>

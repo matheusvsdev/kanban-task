@@ -7,8 +7,6 @@ export interface ITask extends Document {
   status: "new" | "progress" | "delivered" | "review" | "done";
   secondary_status?: "reviewing"; // Campo opcional para quando não for aprovada na revisão
   assigned_users: Types.ObjectId[];
-  createdAt: Date;
-  updatedAt: Date;
 }
 
 const TaskSchema = new Schema<ITask>(
@@ -52,6 +50,7 @@ const TaskSchema = new Schema<ITask>(
   },
   {
     timestamps: true,
+    versionKey: false,
   }
 );
 

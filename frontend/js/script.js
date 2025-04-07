@@ -68,7 +68,7 @@ function setupIndexPage(token) {
   console.log("Estamos na página protegida!");
 
   if (!token) {
-    alert("Acesso negado! Faça login primeiro.");
+    showToast("Acesso negado! Faça login primeiro.");
     window.location.href = "login.html";
     return;
   }
@@ -203,6 +203,7 @@ function createTaskElement(task) {
     taskElement.dataset.id = task._id;
 
     taskElement.innerHTML = `
+    <div class="task" id="taskId" draggable="true"></div>
       <h4>${task.title}</h4>
       <p class="description">${task.description}</p>
       <div class="tag-users">
@@ -222,9 +223,11 @@ function createTaskElement(task) {
         </div>
       </div>
       <div class="date-details">
-        <p class="date">Prazo: ${new Date(
-          task.delivery_date
-        ).toLocaleDateString()}</p>
+        <p class="date">Prazo: ${task.delivery_date
+          .split("T")[0]
+          .split("-")
+          .reverse()
+          .join("/")}</p>
         <span class="details">...</span>
       </div>
     `;
@@ -237,6 +240,15 @@ function createTaskElement(task) {
 }
 
 function renderTasks(tasks) {
+  const now = new Date();
+  const midnight = new Date();
+  midnight.setHours(0, 0, 0, 0); // Define meia-noite no horário atual
+
+  // Filtra tarefas: Remove as concluídas antes da meia-noite
+  const filteredTasks = tasks.filter((task) => {
+    return !(task.status === "done" && new Date(task.updatedAt) < midnight);
+  });
+
   const taskContainers = {
     new: document.querySelector(".card.new"),
     progress: document.querySelector(".card.progress"),
@@ -251,7 +263,7 @@ function renderTasks(tasks) {
     container.appendChild(titleElement);
   });
 
-  tasks.forEach((task) => {
+  filteredTasks.forEach((task) => {
     const taskElement = createTaskElement(task);
 
     taskElement.addEventListener("dragstart", () =>
@@ -285,7 +297,7 @@ document.addEventListener("click", (event) => {
 });
 
 // 🔥 Fecha o modal ao clicar no botão "X"
-document.getElementById("closeModal").addEventListener("click", () => {
+document.getElementById("closeTaskModal").addEventListener("click", () => {
   console.log("Fechando modal...");
   document.getElementById("taskModal").style.display = "none";
 });
@@ -303,6 +315,7 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 document.addEventListener("click", (event) => {
+  loadRoles();
   const button = event.target.closest("a");
   if (button && button.querySelector(".fa-user-plus")) {
     event.preventDefault();
@@ -312,7 +325,7 @@ document.addEventListener("click", (event) => {
 });
 
 // 🔥 Fecha o modal ao clicar no botão "X"
-document.getElementById("closeModal").addEventListener("click", () => {
+document.getElementById("closeUserModal").addEventListener("click", () => {
   console.log("Fechando modal...");
   document.getElementById("userModal").style.display = "none";
 });
@@ -370,14 +383,11 @@ document
     event.preventDefault();
 
     let deliveryDate = document.getElementById("taskDeadline").value;
-    deliveryDate = new Date(deliveryDate + "T00:00:00")
-      .toISOString()
-      .split("T")[0]; // 🔥 Garante que fique no formato correto
 
     const taskData = {
       title: document.getElementById("taskTitle").value,
       description: document.getElementById("taskDescription").value,
-      delivery_date: deliveryDate, // 🔥 Data correta em UTC
+      delivery_date: deliveryDate, // Data correta em UTC
       assigned_users: Array.from(
         document.querySelectorAll(".user-checkbox:checked")
       ).map((el) => el.value),
@@ -386,23 +396,6 @@ document
     console.log("Dados enviados para API:", taskData); // 🔥 Teste para ver se a data está correta
 
     addNewTask(taskData);
-  });
-
-  document
-  .getElementById("userForm")
-  .addEventListener("submit", async (event) => {
-    event.preventDefault();
-
-    const userData = {
-      name: document.getElementById("username").value,
-      email: document.getElementById("email").value,
-      password: document.getElementById("password").value,
-      role: document.getElementById("role").value,
-    };
-
-    console.log("Dados enviados para API:", userData); // 🔥 Teste para ver se a data está correta
-
-    addNewUser(userData);
   });
 
 const socket = io("http://localhost:3001"); // Conecta ao servidor WebSocket
@@ -442,33 +435,37 @@ async function addNewTask(taskData) {
     }
 
     console.log("Tarefa adicionada com sucesso!", responseData);
-    alert("Tarefa adicionada com sucesso!");
+    showToast("Tarefa adicionada com sucesso!");
 
     // 🔥 Fecha o modal após a criação da tarefa
     document.getElementById("taskModal").style.display = "none";
-
-    // 🔥 Criar o elemento da nova tarefa no DOM sem recarregar
-    const newTaskElement = createTaskElement(responseData); // Gera visualmente a nova tarefa
-    document.querySelector(".card.new").appendChild(newTaskElement);
+    document.getElementById("taskForm").reset();
 
     socket.emit("newTask", responseData);
   } catch (error) {
     console.error("Erro ao adicionar nova tarefa:", error);
-    alert(`Erro ao adicionar tarefa: ${error.message}`);
+    showToast("Erro ao adicionar tarefa.");
   }
 }
 
-socket.on("newTask", (task) => {
-  console.log("Nova tarefa recebida via WebSocket:", task); // Teste para ver se o frontend recebeu o evento
+socket.on("newTask", async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Usuário não autenticado!");
+      return;
+    }
 
-  const newTaskElement = createTaskElement(task);
-  document.querySelector(".card.new").appendChild(newTaskElement);
+    const updatedTasks = await getTasksFromAPI(token);
+    renderTasks(updatedTasks);
+  } catch (error) {
+    console.error("Erro ao atualizar tarefas:", error);
+  }
 });
 
 async function updateTaskStatus(taskElement, card, isFromSocket = false) {
   // Adicionando isFromSocket
   const taskId = taskElement.dataset.id;
-  const oldStatus = taskElement.querySelector(".tag").textContent.trim();
   const newStatus = getStatusFromCard(card);
 
   if (!newStatus) return;
@@ -507,51 +504,71 @@ async function updateTaskStatus(taskElement, card, isFromSocket = false) {
       socket.emit("updatedTask", responseData);
     }
 
-    // 🔥 Ajusta visualmente o card na interface sem recarregar a página
-    const statusTag = taskElement.querySelector(".tag");
-    statusTag.classList.remove(oldStatus);
-    statusTag.classList.add(newStatus);
-    statusTag.textContent = newStatus;
-
     // 🔥 Move a tarefa para o novo status
     const updatedTaskContainer = document.querySelector(`.card.${newStatus}`);
     if (updatedTaskContainer) {
       updatedTaskContainer.appendChild(taskElement);
     }
-
   } catch (error) {
     console.error("Erro ao atualizar status:", error);
-    alert("Erro ao atualizar status da tarefa. Tente novamente.");
+    showToast("Erro ao atualizar status da tarefa. Tente novamente.");
   }
 }
 
-socket.on("updatedTask", (task) => {
-  console.log("🔥 Tarefa atualizada recebida via WebSocket:", task);
+socket.on("updatedTask", async () => {
+  try {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      console.error("Usuário não autenticado!");
+      return;
+    }
 
-  const taskElement = document.querySelector(`[data-id='${task._id}']`);
-
-  if (!taskElement) {
-    console.warn("Tarefa não encontrada no DOM:", task._id);
-    return;
+    const updatedTasks = await getTasksFromAPI(token);
+    renderTasks(updatedTasks);
+  } catch (error) {
+    console.error("Erro ao atualizar tarefas:", error);
   }
-
-  const updatedTaskContainer = document.querySelector(`.card.${task.status}`);
-
-  if (!updatedTaskContainer) {
-    console.warn("Container do novo status não encontrado:", task.status);
-    return;
-  }
-
-  // 🔥 Agora passa o parâmetro isFromSocket = true
-  updateTaskStatus(taskElement, updatedTaskContainer, true);
 });
 
-fetchTasks();
+document
+  .getElementById("userForm")
+  .addEventListener("submit", async (event) => {
+    event.preventDefault(); // Evita recarregar a página
+
+    const userData = {
+      name: document.getElementById("username").value,
+      email: document.getElementById("email").value,
+      password: document.getElementById("password").value,
+      role: { _id: document.getElementById("role").value },
+    };
+
+    console.log("Dados do usuário a serem enviados:", userData);
+    await addNewUser(userData);
+  });
+
+async function loadRoles() {
+  try {
+    const response = await fetch("http://localhost:3001/api/role");
+    const roles = await response.json();
+
+    const roleSelect = document.getElementById("role");
+    roleSelect.innerHTML = ""; // Limpa opções antigas
+
+    roles.forEach((role) => {
+      const option = document.createElement("option");
+      option.value = role._id; // ID da role
+      option.textContent = role.name; // Nome da role
+      roleSelect.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Erro ao carregar funções:", error);
+  }
+}
 
 async function addNewUser(userData) {
   const token = localStorage.getItem("token");
   if (!token) {
-    alert("Erro: Usuário não autenticado!");
+    showToast("Erro: Usuário não autenticado!");
     return;
   }
 
@@ -569,7 +586,7 @@ async function addNewUser(userData) {
     );
 
     const responseData = await response.json();
-    console.log("Resposta do servidor:", responseData);
+    console.log("Resposta completa do servidor:", responseData);
 
     if (!response.ok) {
       throw new Error(
@@ -580,14 +597,12 @@ async function addNewUser(userData) {
     }
 
     console.log("Usuário adicionado com sucesso!", responseData);
-    alert("Usuário adicionada com sucesso!");
-
-    // 🔥 Fecha o modal após a criação da tarefa
+    showToast("Usuário adicionado com sucesso!");
     document.getElementById("userModal").style.display = "none";
-
+    document.getElementById("userForm").reset();
   } catch (error) {
     console.error("Erro ao adicionar novo usuário:", error);
-    alert(`Erro ao adicionar usuário: ${error.message}`);
+    showToast("Erro ao adicionar usuário.");
   }
 }
 
@@ -657,7 +672,7 @@ document.addEventListener("DOMContentLoaded", () => {
         !allowedRolesForAdvancedStatuses.includes(userRole)
       ) {
         console.warn("Usuário sem permissão para mover para:", newStatus);
-        alert(
+        showToast(
           `Permissão negada! Apenas admins e managers podem mover para "${newStatus}".`
         );
         return;
@@ -703,3 +718,13 @@ document.addEventListener("click", (event) => {
     }
   }
 });
+
+function showToast(message) {
+  const toast = document.getElementById("toast");
+  toast.textContent = message;
+  toast.style.opacity = "1"; // Aparece
+
+  setTimeout(() => {
+    toast.style.opacity = "0"; // Some após 3 segundos
+  }, 3000);
+}

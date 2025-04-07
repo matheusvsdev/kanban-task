@@ -36,23 +36,18 @@
       <div class="kanban-cards">
         <div class="card new">
           <h3 class="task-header">Tarefas</h3>
-          <div class="task" draggable="true"></div>
         </div>
         <div class="card progress">
           <h3 class="in-progress-header">Em andamento</h3>
-          <div class="task" draggable="true"></div>
         </div>
         <div class="card delivered">
           <h3 class="delivered-header">Entregue</h3>
-          <div class="task" draggable="true"></div>
         </div>
         <div class="card review">
           <h3 class="revision-header">Em revisão</h3>
-          <div class="task" draggable="true"></div>
         </div>
         <div class="card completed">
           <h3 class="completed-header">Concluída</h3>
-          <div class="task" draggable="true"></div>
         </div>
       </div>
     </div>
@@ -60,7 +55,7 @@
     <div id="taskModal" class="modal">
       <div class="modal-content">
         <h2>Adicionar Tarefa</h2>
-        <button id="closeModal">X</button>
+        <button id="closeTaskModal">X</button>
         <!-- Botão para fechar -->
         <form id="taskForm">
           <label for="taskTitle">Título:</label>
@@ -86,10 +81,9 @@
     <div id="userModal" class="modal">
       <div class="modal-content">
         <h2>Cadastrar Usuário</h2>
-        <button id="closeModal">X</button>
+        <button id="closeUserModal">X</button>
         <!-- Botão para fechar -->
         <form id="userForm">
-
           <label for="username">Nome:</label>
           <input type="text" id="username" required />
 
@@ -100,15 +94,14 @@
           <input type="password" id="password" required />
 
           <label for="role">Função:</label>
-          <select id="role" required>
-            <option value="manager">Manager</option>
-            <option value="developer">Desenvolvedor</option>
-          </select>
+          <select id="role" required></select>
 
           <button type="submit">Criar</button>
         </form>
       </div>
     </div>
+    <!-- 🔥 Toast Notification (fica invisível até ser ativado) -->
+    <div id="toast" class="toast"></div>
     <script src="http://localhost:3001/socket.io/socket.io.js"></script>
     <script src="js/script.js"></script>
   </body>

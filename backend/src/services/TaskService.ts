@@ -13,6 +13,13 @@ class TaskService {
     if (usersExist.length !== taskData.assigned_users.length) {
       throw new Error("Um ou mais usuários atribuídos não existem no banco.");
     }
+
+    if (!taskData.delivery_date) {
+      throw new Error("delivery_date não foi fornecida!");
+    }
+
+    taskData.delivery_date = new Date(taskData.delivery_date);
+    taskData.delivery_date.setUTCHours(0, 0, 0, 0); // Remove ajuste de fuso horári
     return await TaskModel.create(taskData);
   }
 

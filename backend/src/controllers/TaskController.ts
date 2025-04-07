@@ -13,7 +13,7 @@ class TaskController {
 
       console.log("Usuário autenticado:", req.user);
 
-      const allowedRoles = ["admin", "manager", "tech"];
+      const allowedRoles = ["admin", "manager"];
       if (!req.user.role || !allowedRoles.includes(req.user.role)) {
         throw new Error(
           "Permissão negada! Apenas administradores, gerentes e técnicos podem criar tarefas."

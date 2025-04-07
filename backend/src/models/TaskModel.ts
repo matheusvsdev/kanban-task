@@ -5,7 +5,6 @@ export interface ITask extends Document {
   description: string;
   delivery_date: Date;
   status: "new" | "progress" | "delivered" | "review" | "done";
-  secondary_status?: "reviewing"; // Campo opcional para quando não for aprovada na revisão
   assigned_users: Types.ObjectId[];
 }
 
@@ -28,13 +27,8 @@ const TaskSchema = new Schema<ITask>(
       enum: ["new", "progress", "review", "done"],
       default: "new",
     },
-    secondary_status: {
-      type: String,
-      enum: ["reviewing"], // Apenas "reviewing" pode ser usado
-      required: false, // Começa sem "reviewing"
-    },
     assigned_users: {
-      type: [{ type: Types.ObjectId, ref: "User" }], // 🔥 Define como um ARRAY de ObjectId
+      type: [{ type: Types.ObjectId, ref: "User" }], // Define como um ARRAY de ObjectId
       validate: {
         validator: function (users: Types.ObjectId[]) {
           return (
